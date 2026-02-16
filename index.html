@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saiz Syete WayFinder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0B1F3A 0%, #1a3a5c 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .phone {
+            width: 100%;
+            max-width: 400px;
+            height: 700px;
+            background: #0F2A4A;
+            border-radius: 35px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            position: relative;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* HOME SCREEN */
+        .home-header {
+            background: linear-gradient(135deg, #1ABC9C 0%, #16a085 100%);
+            padding: 40px 20px 30px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .home-header h1 {
+            font-size: 26px;
+            color: white;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .home-header p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+
+        .destinations {
+            flex: 1;
+            padding: 25px 20px;
+            overflow-y: auto;
+        }
+
+        .dest-card {
+            background: linear-gradient(135deg, #1ABC9C 0%, #16a085 100%);
+            border: none;
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 15px;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(26, 188, 156, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .dest-card:active {
+            transform: scale(0.97);
+        }
+
+        .dest-card:hover {
+            box-shadow: 0 6px 25px rgba(26, 188, 156, 0.5);
+        }
+
+        .dest-info {
+            text-align: left;
+        }
+
+        .dest-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 4px;
+        }
+
+        .dest-subtitle {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .dest-icon {
+            font-size: 32px;
+        }
+
+        /* NAV SCREEN */
+        .nav-topbar {
+            background: linear-gradient(to bottom, rgba(15, 42, 74, 0.95), transparent);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+        }
+
+        .dest-title {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            background: rgba(26, 188, 156, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-btn {
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+
+        .back-btn:active {
+            transform: scale(0.9);
+        }
+
+        .camera-view {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .arrow-container {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .arrow-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 4px solid rgba(26, 188, 156, 0.4);
+            border-radius: 50%;
+            animation: pulse-ring 2s infinite;
+        }
+
+        @keyframes pulse-ring {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.6;
+            }
+            50% {
+                transform: scale(1.15);
+                opacity: 0.3;
+            }
+        }
+
+        .arrow {
+            font-size: 70px;
+            color: #1ABC9C;
+            filter: drop-shadow(0 0 15px rgba(26, 188, 156, 0.8))
+                    drop-shadow(0 0 30px rgba(26, 188, 156, 0.5))
+                    drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+            transition: transform 0.5s ease;
+            z-index: 1;
+        }
+
+        .stats-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(15, 42, 74, 0.95), transparent);
+            padding: 30px 20px 40px;
+            backdrop-filter: blur(15px);
+        }
+
+        .stats-box {
+            background: rgba(26, 188, 156, 0.15);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            border: 2px solid rgba(26, 188, 156, 0.3);
+            margin-bottom: 15px;
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 48px;
+            font-weight: 700;
+            color: #1ABC9C;
+            line-height: 1;
+            margin-bottom: 5px;
+            text-shadow: 0 0 20px rgba(26, 188, 156, 0.5);
+        }
+
+        .stat-unit {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 16px;
+        }
+
+        .time-estimate {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 5px;
+        }
+
+        .walk-btn {
+            background: linear-gradient(135deg, #1ABC9C 0%, #16a085 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 16px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(26, 188, 156, 0.4);
+        }
+
+        .walk-btn:active {
+            transform: scale(0.97);
+        }
+
+        /* ARRIVED OVERLAY */
+        .arrived-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 42, 74, 0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            backdrop-filter: blur(10px);
+        }
+
+        .arrived-overlay.show {
+            display: flex;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .arrived-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 0.8s;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+        }
+
+        .arrived-text {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1ABC9C;
+            margin-bottom: 10px;
+        }
+
+        .arrived-subtitle {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 30px;
+        }
+
+        .arrived-btn {
+            background: linear-gradient(135deg, #1ABC9C 0%, #16a085 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 14px 40px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* CAMERA ERROR */
+        .camera-error {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            padding: 30px;
+            display: none;
+        }
+
+        .camera-error.show {
+            display: block;
+        }
+
+        .error-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+
+        .error-text {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 20px;
+        }
+
+        .retry-btn {
+            background: rgba(26, 188, 156, 0.3);
+            color: white;
+            border: 2px solid #1ABC9C;
+            border-radius: 10px;
+            padding: 10px 30px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <!-- HOME SCREEN -->
+        <div id="homeScreen" class="screen active">
+            <div class="home-header">
+                <h1>🎯 Saiz Syete WayFinder</h1>
+                <p>Choose your destination</p>
+            </div>
+            <div class="destinations">
+                <button class="dest-card" onclick="startNavigation('Library', 45)">
+                    <div class="dest-info">
+                        <div class="dest-name">Library</div>
+                        <div class="dest-subtitle">2nd Floor, Academic Building</div>
+                    </div>
+                    <div class="dest-icon">📚</div>
+                </button>
+                <button class="dest-card" onclick="startNavigation('Registrar', 30)">
+                    <div class="dest-info">
+                        <div class="dest-name">Registrar Office</div>
+                        <div class="dest-subtitle">Ground Floor, Admin Building</div>
+                    </div>
+                    <div class="dest-icon">📝</div>
+                </button>
+                <button class="dest-card" onclick="startNavigation('Clinic', 25)">
+                    <div class="dest-info">
+                        <div class="dest-name">Clinic</div>
+                        <div class="dest-subtitle">1st Floor, Admin Building</div>
+                    </div>
+                    <div class="dest-icon">🏥</div>
+                </button>
+                <button class="dest-card" onclick="startNavigation('Auditorium', 60)">
+                    <div class="dest-info">
+                        <div class="dest-name">Auditorium</div>
+                        <div class="dest-subtitle">Main Building</div>
+                    </div>
+                    <div class="dest-icon">🎭</div>
+                </button>
+                <button class="dest-card" onclick="startNavigation('Cafeteria', 35)">
+                    <div class="dest-info">
+                        <div class="dest-name">Cafeteria</div>
+                        <div class="dest-subtitle">Ground Floor, Main Building</div>
+                    </div>
+                    <div class="dest-icon">🍔</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- NAVIGATION SCREEN -->
+        <div id="navScreen" class="screen">
+            <div class="camera-view">
+                <video id="video" autoplay playsinline></video>
+                
+                <div class="camera-error" id="cameraError">
+                    <div class="error-icon">📷</div>
+                    <div class="error-text">Camera access denied or unavailable</div>
+                    <button class="retry-btn" onclick="startCamera()">Retry</button>
+                </div>
+
+                <div class="nav-topbar">
+                    <div class="dest-title" id="destinationTitle">Library</div>
+                    <button class="back-btn" onclick="goBack()">✕</button>
+                </div>
+
+                <div class="arrow-container">
+                    <div class="arrow-ring"></div>
+                    <div class="arrow" id="arrow">⬆️</div>
+                </div>
+
+                <div class="stats-panel">
+                    <div class="stats-box">
+                        <div class="stat-label">Distance Remaining</div>
+                        <div>
+                            <span class="stat-value" id="distanceValue">45</span>
+                            <span class="stat-unit">meters</span>
+                        </div>
+                        <div class="time-estimate" id="timeEstimate">~1 minute</div>
+                    </div>
+                    <button class="walk-btn" onclick="walkForward()">🚶 Simulate Walking</button>
+                </div>
+
+                <div class="arrived-overlay" id="arrivedOverlay">
+                    <div class="arrived-icon">🎉</div>
+                    <div class="arrived-text">You've Arrived!</div>
+                    <div class="arrived-subtitle">You have reached your destination</div>
+                    <button class="arrived-btn" onclick="goBack()">Back to Home</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let distance = 45;
+        let currentDestination = '';
+        let walkingInterval = null;
+        let cameraStream = null;
+
+        function startNavigation(place, initialDistance) {
+            distance = initialDistance;
+            currentDestination = place;
+            
+            document.getElementById('homeScreen').classList.remove('active');
+            document.getElementById('navScreen').classList.add('active');
+            document.getElementById('destinationTitle').innerText = place;
+            document.getElementById('distanceValue').innerText = distance;
+            updateTimeEstimate();
+            
+            // Random initial arrow rotation
+            rotateArrow(Math.random() * 360);
+            
+            startCamera();
+        }
+
+        function goBack() {
+            document.getElementById('navScreen').classList.remove('active');
+            document.getElementById('homeScreen').classList.add('active');
+            document.getElementById('arrivedOverlay').classList.remove('show');
+            
+            if (walkingInterval) {
+                clearInterval(walkingInterval);
+            }
+            
+            stopCamera();
+        }
+
+        function walkForward() {
+            if (distance <= 0) return;
+
+            const walkBtn = document.querySelector('.walk-btn');
+            walkBtn.textContent = '🚶 Walking...';
+            walkBtn.disabled = true;
+
+            if (walkingInterval) {
+                clearInterval(walkingInterval);
+            }
+
+            walkingInterval = setInterval(() => {
+                if (distance > 0) {
+                    distance -= Math.floor(Math.random() * 3) + 3; // 3-5 meters
+                    if (distance < 0) distance = 0;
+
+                    document.getElementById('distanceValue').innerText = distance;
+                    updateTimeEstimate();
+
+                    // Rotate arrow slightly
+                    const currentRotation = parseFloat(
+                        document.getElementById('arrow').style.transform
+                            .replace('rotate(', '')
+                            .replace('deg)', '')
+                    ) || 0;
+                    const newRotation = currentRotation + (Math.random() * 20 - 10);
+                    rotateArrow(newRotation);
+
+                    if (distance <= 0) {
+                        clearInterval(walkingInterval);
+                        showArrived();
+                    }
+                } else {
+                    clearInterval(walkingInterval);
+                }
+            }, 500);
+
+            setTimeout(() => {
+                if (distance > 0) {
+                    walkBtn.textContent = '🚶 Simulate Walking';
+                    walkBtn.disabled = false;
+                }
+            }, 3000);
+        }
+
+        function rotateArrow(degrees) {
+            document.getElementById('arrow').style.transform = `rotate(${degrees}deg)`;
+        }
+
+        function updateTimeEstimate() {
+            const seconds = Math.round(distance / 1.4); // Walking speed ~1.4 m/s
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+
+            let timeText = '';
+            if (minutes > 0) {
+                timeText = `~${minutes} min ${remainingSeconds} sec`;
+            } else {
+                timeText = `~${remainingSeconds} seconds`;
+            }
+
+            document.getElementById('timeEstimate').innerText = timeText;
+        }
+
+        function showArrived() {
+            document.getElementById('arrivedOverlay').classList.add('show');
+        }
+
+        function startCamera() {
+            const video = document.getElementById('video');
+            const errorDiv = document.getElementById('cameraError');
+            
+            errorDiv.classList.remove('show');
+
+            navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'environment' } 
+            })
+            .then(stream => {
+                video.srcObject = stream;
+                cameraStream = stream;
+            })
+            .catch(err => {
+                console.error('Camera error:', err);
+                errorDiv.classList.add('show');
+            });
+        }
+
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+        }
+    </script>
+</body>
+</html>
