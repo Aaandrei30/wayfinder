@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPS Test - Saiz Syete</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #16a085;
+            margin-bottom: 30px;
+        }
+
+        .info-box {
+            background: rgba(26, 188, 156, 0.1);
+            border: 2px solid #16a085;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .label {
+            color: #aaa;
+        }
+
+        .value {
+            color: #16a085;
+            font-weight: bold;
+        }
+
+        .arrow-container {
+            width: 200px;
+            height: 200px;
+            margin: 30px auto;
+            position: relative;
+            background: rgba(26, 188, 156, 0.1);
+            border-radius: 50%;
+            border: 3px solid #16a085;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .arrow {
+            font-size: 80px;
+            transition: transform 0.3s ease;
+            filter: drop-shadow(0 0 10px #16a085);
+        }
+
+        .destination-btn {
+            background: linear-gradient(135deg, #16a085, #1abc9c);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .destination-btn:active {
+            transform: scale(0.95);
+        }
+
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .error {
+            background: rgba(231, 76, 60, 0.3);
+            color: #e74c3c;
+        }
+
+        .success {
+            background: rgba(46, 204, 113, 0.3);
+            color: #2ecc71;
+        }
+
+        .distance-big {
+            text-align: center;
+            font-size: 48px;
+            font-weight: bold;
+            color: #16a085;
+            margin: 20px 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 GPS Navigation Test</h1>
+
+        <!-- Home Screen -->
+        <div id="homeScreen">
+            <div class="status">Select a destination to test navigation</div>
+            
+            <button class="destination-btn" onclick="navigate('School Near My House', 15.018199812781752, 120.69216723999908)">
+                🏫 School (130m from my house)
+            </button>
+
+            <button class="destination-btn" onclick="navigate('My House', 15.018694148543986, 120.69339710995725)">
+                🏠 My House
+            </button>
+
+            <button class="destination-btn" onclick="navigate('Test Location - Library', 15.0190, 120.6930)">
+                📚 Test Location - Library
+            </button>
+        </div>
+
+        <!-- Navigation Screen -->
+        <div id="navScreen" class="hidden">
+            <div class="status" id="gpsStatus">Getting your location...</div>
+
+            <h2 style="text-align: center; margin: 20px 0;" id="destName">Navigating to...</h2>
+
+            <div class="arrow-container">
+                <div class="arrow" id="arrow">⬆️</div>
+            </div>
+
+            <div class="distance-big" id="distanceBig">--</div>
+
+            <div class="info-box">
+                <div class="info-row">
+                    <span class="label">Your Latitude:</span>
+                    <span class="value" id="yourLat">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Your Longitude:</span>
+                    <span class="value" id="yourLng">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Destination Lat:</span>
+                    <span class="value" id="destLat">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Destination Lng:</span>
+                    <span class="value" id="destLng">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Distance:</span>
+                    <span class="value" id="distance">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Direction:</span>
+                    <span class="value" id="direction">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">GPS Accuracy:</span>
+                    <span class="value" id="accuracy">--</span>
+                </div>
+            </div>
+
+            <button class="destination-btn" onclick="goBack()">← Back</button>
+        </div>
+    </div>
+
+    <script>
+        let watchId = null;
+        let destLat = 0;
+        let destLng = 0;
+        let destName = '';
+
+        function navigate(name, lat, lng) {
+            destName = name;
+            destLat = lat;
+            destLng = lng;
+
+            // Show nav screen
+            document.getElementById('homeScreen').classList.add('hidden');
+            document.getElementById('navScreen').classList.remove('hidden');
+
+            // Update destination info
+            document.getElementById('destName').textContent = name;
+            document.getElementById('destLat').textContent = lat.toFixed(6);
+            document.getElementById('destLng').textContent = lng.toFixed(6);
+
+            // Start watching GPS
+            startTracking();
+        }
+
+        function goBack() {
+            // Stop watching GPS
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+
+            // Go back to home
+            document.getElementById('navScreen').classList.add('hidden');
+            document.getElementById('homeScreen').classList.remove('hidden');
+        }
+
+        function startTracking() {
+            const statusEl = document.getElementById('gpsStatus');
+
+            if (!navigator.geolocation) {
+                statusEl.textContent = '❌ GPS not supported on this device';
+                statusEl.className = 'status error';
+                return;
+            }
+
+            statusEl.textContent = '🔄 Getting GPS location...';
+            statusEl.className = 'status';
+
+            // Watch position continuously
+            watchId = navigator.geolocation.watchPosition(
+                // Success callback
+                function(position) {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+
+                    // Update display
+                    document.getElementById('yourLat').textContent = userLat.toFixed(6);
+                    document.getElementById('yourLng').textContent = userLng.toFixed(6);
+                    document.getElementById('accuracy').textContent = accuracy.toFixed(1) + 'm';
+
+                    // Calculate distance
+                    const distance = calculateDistance(userLat, userLng, destLat, destLng);
+                    document.getElementById('distance').textContent = distance.toFixed(1) + 'm';
+                    document.getElementById('distanceBig').textContent = distance.toFixed(0) + 'm';
+
+                    // Calculate bearing (direction)
+                    const bearing = calculateBearing(userLat, userLng, destLat, destLng);
+                    document.getElementById('direction').textContent = bearing.toFixed(0) + '°';
+
+                    // Rotate arrow
+                    document.getElementById('arrow').style.transform = `rotate(${bearing}deg)`;
+
+                    // Update status
+                    if (accuracy > 20) {
+                        statusEl.textContent = '⚠️ GPS accuracy is low (' + accuracy.toFixed(0) + 'm)';
+                        statusEl.className = 'status error';
+                    } else {
+                        statusEl.textContent = '✅ GPS locked (accuracy: ' + accuracy.toFixed(0) + 'm)';
+                        statusEl.className = 'status success';
+                    }
+
+                    // Check if arrived
+                    if (distance < 5) {
+                        statusEl.textContent = '🎉 You are very close!';
+                        statusEl.className = 'status success';
+                    }
+                },
+                // Error callback
+                function(error) {
+                    let errorMsg = '';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMsg = '❌ GPS permission denied. Enable location in settings.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMsg = '❌ GPS unavailable. Try going outside.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMsg = '❌ GPS timeout. Still searching...';
+                            break;
+                        default:
+                            errorMsg = '❌ GPS error: ' + error.message;
+                    }
+                    statusEl.textContent = errorMsg;
+                    statusEl.className = 'status error';
+                },
+                // Options
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            // Haversine formula
+            const R = 6371e3; // Earth radius in meters
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δφ = (lat2 - lat1) * Math.PI / 180;
+            const Δλ = (lng2 - lng1) * Math.PI / 180;
+
+            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+            return R * c; // Distance in meters
+        }
+
+        function calculateBearing(lat1, lng1, lat2, lng2) {
+            // Calculate bearing (direction)
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δλ = (lng2 - lng1) * Math.PI / 180;
+
+            const y = Math.sin(Δλ) * Math.cos(φ2);
+            const x = Math.cos(φ1) * Math.sin(φ2) -
+                      Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+            
+            let bearing = Math.atan2(y, x) * 180 / Math.PI;
+            
+            // Normalize to 0-360
+            bearing = (bearing + 360) % 360;
+            
+            return bearing;
+        }
+    </script>
+</body>
+</html>
